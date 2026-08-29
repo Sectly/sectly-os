@@ -92,6 +92,57 @@ jobs:
           types: ${{ matrix.disk-type }}
           additional-args: --use-librepo=True
 
+      - name: Add basic graphics GRUB entry to ISO
+        if: matrix.disk-type == 'anaconda-iso'
+        run: |
+          ISO=$(find ${{ steps.build.outputs.output-directory }} -name "*.iso" | head -1)
+          [ -z "$ISO" ] && { echo "No ISO found, skipping"; exit 0; }
+
+          sudo apt-get install -y xorriso
+
+          TMPDIR=$(mktemp -d)
+
+          # Extract EFI GRUB config from ISO
+          xorriso -osirrox on -indev "$ISO" \
+            -extract EFI/BOOT/grub.cfg "$TMPDIR/grub.cfg" 2>/dev/null || true
+
+          if [ ! -f "$TMPDIR/grub.cfg" ]; then
+            echo "Could not extract EFI/BOOT/grub.cfg -- skipping"
+            exit 0
+          fi
+
+          echo "Original grub.cfg:"
+          cat "$TMPDIR/grub.cfg"
+
+          # Append a basic graphics / nomodeset entry after the first menuentry block
+          python3 - "$TMPDIR/grub.cfg" << 'PYEOF'
+          import re, sys
+          path = sys.argv[1]
+          with open(path) as f:
+              content = f.read()
+          m = re.search(r'(menuentry\s+[\'"][^\'"]+[\'"][^\{]*\{[^\}]+linuxefi[^\}]+\})', content, re.DOTALL)
+          if not m:
+              print("No linuxefi menuentry found -- skipping")
+              sys.exit(0)
+          original = m.group(1)
+          basic = re.sub(r"(menuentry\s+)['\"]([^'\"]*)['\"]",
+                         r"\g<1>'Install SectlyOS (Basic Graphics / VMs)'", original, count=1)
+          basic = re.sub(r'(linuxefi\s+\S+[^\n]*)', r'\1 nomodeset', basic)
+          with open(path, 'w') as f:
+              f.write(content + '\n\n' + basic)
+          print("Added basic graphics entry successfully")
+          PYEOF
+
+          echo "Modified grub.cfg:"
+          cat "$TMPDIR/grub.cfg"
+
+          # Write modified grub.cfg back into the ISO
+          xorriso -dev "$ISO" -update "$TMPDIR/grub.cfg" EFI/BOOT/grub.cfg 2>/dev/null \
+            && echo "ISO updated successfully" \
+            || echo "WARNING: Could not update ISO (UEFI entry may not appear)"
+
+          rm -rf "$TMPDIR"
+
       - name: Upload disk images and Checksum to Job Artifacts
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
