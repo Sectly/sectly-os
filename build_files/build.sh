@@ -20,24 +20,23 @@ sed -i \
     /etc/os-release
 
 grep -q "^LOGO="       /etc/os-release || echo 'LOGO=sectlyos'           >> /etc/os-release
+grep -q "^VARIANT="    /etc/os-release || echo 'VARIANT="SectlyOS"'      >> /etc/os-release
+grep -q "^VARIANT_ID=" /etc/os-release || echo 'VARIANT_ID=sectlyos'     >> /etc/os-release
 
 ### GRUB
-# Set distributor name so boot menu entries say SectlyOS
 if [ -f /etc/default/grub ]; then
     sed -i 's|^GRUB_DISTRIBUTOR=.*|GRUB_DISTRIBUTOR="SectlyOS"|' /etc/default/grub
     grep -q "^GRUB_DISTRIBUTOR=" /etc/default/grub || echo 'GRUB_DISTRIBUTOR="SectlyOS"' >> /etc/default/grub
 fi
-grep -q "^VARIANT="    /etc/os-release || echo 'VARIANT="SectlyOS"'      >> /etc/os-release
-grep -q "^VARIANT_ID=" /etc/os-release || echo 'VARIANT_ID=sectlyos'     >> /etc/os-release
 
-### Plymouth
+### Official packages (must succeed -- install before any commands that depend on them)
+dnf5 install -y firefox plymouth-plugin-script plymouth-plugin-two-step
+
+### Plymouth (must run after plymouth-plugin-script is installed)
 plymouth-set-default-theme sectlyos
 
 ### Systemd user services
 systemctl --global enable sectlyos-set-wallpaper.service
-
-### Official packages (must succeed)
-dnf5 install -y firefox plymouth-plugin-script plymouth-plugin-two-step
 
 ### Starship prompt (atim/starship COPR)
 if dnf5 -y copr enable atim/starship && dnf5 install -y starship; then
