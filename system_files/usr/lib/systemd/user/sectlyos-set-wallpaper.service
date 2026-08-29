@@ -1,0 +1,12 @@
+[Unit]
+Description=Set SectlyOS default wallpaper
+After=plasma-plasmashell.service
+ConditionPathExists=!%h/.config/sectlyos-wallpaper-applied
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/plasma-apply-wallpaperimage /usr/share/wallpapers/SectlyOS-3/contents/images/2896x4096.png
+ExecStartPost=/usr/bin/touch %h/.config/sectlyos-wallpaper-applied
+
+[Install]
+WantedBy=plasma-plasmashell.service

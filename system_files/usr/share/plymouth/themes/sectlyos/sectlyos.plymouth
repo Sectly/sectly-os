@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=SectlyOS
+Description=SectlyOS boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/sectlyos
+ScriptFile=/usr/share/plymouth/themes/sectlyos/sectlyos.script

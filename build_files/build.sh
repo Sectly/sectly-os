@@ -11,7 +11,6 @@ cp -avf "/ctx/system_files"/. /
 sed -i \
     -e 's|^NAME=.*|NAME="SectlyOS"|' \
     -e 's|^PRETTY_NAME=.*|PRETTY_NAME="SectlyOS"|' \
-    -e 's|^ID=.*|ID=sectlyos|' \
     -e 's|^ID_LIKE=.*|ID_LIKE="aurora fedora"|' \
     -e 's|^HOME_URL=.*|HOME_URL="https://github.com/Sectly/sectly-os"|' \
     -e 's|^BUG_REPORT_URL=.*|BUG_REPORT_URL="https://github.com/Sectly/sectly-os/issues"|' \
@@ -21,8 +20,21 @@ sed -i \
     /etc/os-release
 
 grep -q "^LOGO="       /etc/os-release || echo 'LOGO=sectlyos'           >> /etc/os-release
+
+### GRUB
+# Set distributor name so boot menu entries say SectlyOS
+if [ -f /etc/default/grub ]; then
+    sed -i 's|^GRUB_DISTRIBUTOR=.*|GRUB_DISTRIBUTOR="SectlyOS"|' /etc/default/grub
+    grep -q "^GRUB_DISTRIBUTOR=" /etc/default/grub || echo 'GRUB_DISTRIBUTOR="SectlyOS"' >> /etc/default/grub
+fi
 grep -q "^VARIANT="    /etc/os-release || echo 'VARIANT="SectlyOS"'      >> /etc/os-release
 grep -q "^VARIANT_ID=" /etc/os-release || echo 'VARIANT_ID=sectlyos'     >> /etc/os-release
+
+### Plymouth
+plymouth-set-default-theme sectlyos
+
+### Systemd user services
+systemctl --global enable sectlyos-set-wallpaper.service
 
 ### Official packages (must succeed)
 dnf5 install -y firefox
