@@ -24,22 +24,28 @@ grep -q "^LOGO="       /etc/os-release || echo 'LOGO=sectlyos'           >> /etc
 grep -q "^VARIANT="    /etc/os-release || echo 'VARIANT="SectlyOS"'      >> /etc/os-release
 grep -q "^VARIANT_ID=" /etc/os-release || echo 'VARIANT_ID=sectlyos'     >> /etc/os-release
 
-### Packages
-
-## Enable COPRs
-dnf5 -y copr enable imput/helium
-dnf5 -y copr enable varlad/zed
-
-## Install packages
+### Official packages (must succeed)
 dnf5 install -y \
-    helium-bin \
     firefox \
     nano \
-    zed \
     bash-completion \
     starship \
     fzf
 
-## Disable COPRs -- repos must not persist in the image (updates come from image rebuilds)
-dnf5 -y copr disable imput/helium
-dnf5 -y copr disable varlad/zed
+### Helium browser (imput/helium COPR)
+if dnf5 -y copr enable imput/helium && dnf5 install -y helium-bin; then
+    dnf5 -y copr disable imput/helium
+    echo "Helium installed successfully"
+else
+    dnf5 -y copr disable imput/helium 2>/dev/null || true
+    echo "WARNING: Helium installation failed -- skipping"
+fi
+
+### Zed editor (pgdev/zed COPR)
+if dnf5 -y copr enable pgdev/zed && dnf5 install -y zed; then
+    dnf5 -y copr disable pgdev/zed
+    echo "Zed installed successfully"
+else
+    dnf5 -y copr disable pgdev/zed 2>/dev/null || true
+    echo "WARNING: Zed installation failed -- skipping"
+fi
