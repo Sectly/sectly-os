@@ -25,12 +25,16 @@ grep -q "^VARIANT="    /etc/os-release || echo 'VARIANT="SectlyOS"'      >> /etc
 grep -q "^VARIANT_ID=" /etc/os-release || echo 'VARIANT_ID=sectlyos'     >> /etc/os-release
 
 ### Official packages (must succeed)
-dnf5 install -y \
-    firefox \
-    nano \
-    bash-completion \
-    starship \
-    fzf
+dnf5 install -y firefox
+
+### Starship prompt (atim/starship COPR)
+if dnf5 -y copr enable atim/starship && dnf5 install -y starship; then
+    dnf5 -y copr disable atim/starship
+    echo "Starship installed successfully"
+else
+    dnf5 -y copr disable atim/starship 2>/dev/null || true
+    echo "WARNING: Starship installation failed -- skipping"
+fi
 
 ### Helium browser (imput/helium COPR)
 if dnf5 -y copr enable imput/helium && dnf5 install -y helium-bin; then
