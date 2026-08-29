@@ -37,7 +37,7 @@ plymouth-set-default-theme sectlyos
 systemctl --global enable sectlyos-set-wallpaper.service
 
 ### Official packages (must succeed)
-dnf5 install -y firefox
+dnf5 install -y firefox plymouth-plugin-script plymouth-plugin-two-step
 
 ### Starship prompt (atim/starship COPR)
 if dnf5 -y copr enable atim/starship && dnf5 install -y starship; then
