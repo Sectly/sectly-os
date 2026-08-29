@@ -23,3 +23,23 @@ sed -i \
 grep -q "^LOGO="       /etc/os-release || echo 'LOGO=sectlyos'           >> /etc/os-release
 grep -q "^VARIANT="    /etc/os-release || echo 'VARIANT="SectlyOS"'      >> /etc/os-release
 grep -q "^VARIANT_ID=" /etc/os-release || echo 'VARIANT_ID=sectlyos'     >> /etc/os-release
+
+### Packages
+
+## Enable COPRs
+dnf5 -y copr enable imput/helium
+dnf5 -y copr enable varlad/zed
+
+## Install packages
+dnf5 install -y \
+    helium-bin \
+    firefox \
+    nano \
+    zed \
+    bash-completion \
+    starship \
+    fzf
+
+## Disable COPRs -- repos must not persist in the image (updates come from image rebuilds)
+dnf5 -y copr disable imput/helium
+dnf5 -y copr disable varlad/zed
